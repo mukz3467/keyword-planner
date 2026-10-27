@@ -1,33 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-const STORAGE_KEY = 'keyword-planner-data-v2';
-const DEFAULT_PROJECT_ID = 'project-demo';
+const navItems = ['Dashboard', 'Keyword Planner', 'Content Briefs', 'Rank Tracking', 'Content Calendar', 'Settings'];
 
-const intentOptions = ['Informational', 'Commercial', 'Transactional', 'Navigational', 'Brand'];
-const channelOptions = [
-  'SEO blog',
-  'Website landing page',
-  'Product page',
-  'Instagram carousel',
-  'Short-form video',
-  'LinkedIn post',
-  'Newsletter',
-  'YouTube topic',
-];
+const intentOptions = ['All', 'Informational', 'Commercial', 'Transactional', 'Navigational', 'Brand'];
+const channelOptions = ['All', 'SEO blog', 'Website landing page', 'Product page', 'Instagram carousel', 'Short-form video', 'LinkedIn post', 'Newsletter', 'YouTube topic'];
 
 const defaultProjects = [
-  {
-    id: DEFAULT_PROJECT_ID,
-    name: 'Demo brand',
-    niche: 'B2B growth marketing',
-    goal: 'Generate qualified leads through SEO and social content',
-  },
+  { id: 'proj-1', name: 'Growth Pilot', niche: 'B2B SaaS', goal: 'Increase demo bookings', status: 'Active' },
+  { id: 'proj-2', name: 'Ecom Lift', niche: 'E-commerce', goal: 'Boost organic revenue', status: 'Planning' },
+  { id: 'proj-3', name: 'Agency Scale', niche: 'Agency services', goal: 'Grow inbound leads', status: 'Active' },
 ];
 
 const defaultKeywords = [
   {
     id: 'kw-1',
-    projectId: DEFAULT_PROJECT_ID,
+    projectId: 'proj-1',
     keyword: 'email marketing for small businesses',
     intent: 'Commercial',
     volume: 1800,
@@ -38,11 +25,11 @@ const defaultKeywords = [
     contentType: 'Blog article',
     status: 'Ready',
     notes: 'Strong lead generation opportunity',
-    createdAt: new Date().toISOString(),
+    trend: 72,
   },
   {
     id: 'kw-2',
-    projectId: DEFAULT_PROJECT_ID,
+    projectId: 'proj-1',
     keyword: 'how to grow newsletter subscribers',
     intent: 'Informational',
     volume: 1400,
@@ -52,12 +39,12 @@ const defaultKeywords = [
     channel: 'SEO blog',
     contentType: 'Educational article',
     status: 'Drafting',
-    notes: 'Good top-of-funnel article',
-    createdAt: new Date().toISOString(),
+    notes: 'High-intent educational content',
+    trend: 81,
   },
   {
     id: 'kw-3',
-    projectId: DEFAULT_PROJECT_ID,
+    projectId: 'proj-1',
     keyword: 'best CRM for agencies',
     intent: 'Commercial',
     volume: 2200,
@@ -67,12 +54,12 @@ const defaultKeywords = [
     channel: 'Website landing page',
     contentType: 'Comparison page',
     status: 'High priority',
-    notes: 'Strong commercial intent',
-    createdAt: new Date().toISOString(),
+    notes: 'Strong competitive opportunity',
+    trend: 79,
   },
   {
     id: 'kw-4',
-    projectId: DEFAULT_PROJECT_ID,
+    projectId: 'proj-1',
     keyword: 'content calendar ideas for startups',
     intent: 'Informational',
     volume: 960,
@@ -82,8 +69,38 @@ const defaultKeywords = [
     channel: 'Instagram carousel',
     contentType: 'Carousel',
     status: 'Scheduled',
-    notes: 'Good social engagement angle',
-    createdAt: new Date().toISOString(),
+    notes: 'Strong organic social angle',
+    trend: 88,
+  },
+  {
+    id: 'kw-5',
+    projectId: 'proj-2',
+    keyword: 'best ecommerce email tools',
+    intent: 'Commercial',
+    volume: 1600,
+    difficulty: 52,
+    relevance: 91,
+    brandFit: 83,
+    channel: 'Website landing page',
+    contentType: 'Landing page',
+    status: 'Ready',
+    notes: 'Commercial conversion opportunity',
+    trend: 76,
+  },
+  {
+    id: 'kw-6',
+    projectId: 'proj-2',
+    keyword: 'how to reduce cart abandonment',
+    intent: 'Informational',
+    volume: 1100,
+    difficulty: 41,
+    relevance: 87,
+    brandFit: 84,
+    channel: 'SEO blog',
+    contentType: 'Blog article',
+    status: 'Drafting',
+    notes: 'Strong educational demand',
+    trend: 84,
   },
 ];
 
@@ -91,13 +108,7 @@ function scoreKeyword(item) {
   const volumeScore = Math.min(100, item.volume / 25);
   const difficultyPenalty = (item.difficulty / 100) * 35;
   const intentBoost =
-    item.intent === 'Commercial'
-      ? 20
-      : item.intent === 'Transactional'
-        ? 18
-        : item.intent === 'Informational'
-          ? 12
-          : 10;
+    item.intent === 'Commercial' ? 20 : item.intent === 'Transactional' ? 18 : item.intent === 'Informational' ? 12 : 10;
 
   const total =
     item.relevance * 0.38 +
@@ -110,194 +121,125 @@ function scoreKeyword(item) {
 }
 
 function getPriorityLabel(score) {
-  if (score >= 80) return 'High priority';
+  if (score >= 80) return 'High';
   if (score >= 60) return 'Medium';
   return 'Low';
 }
 
-function generateRelatedKeywords(term) {
-  const base = term.trim();
-  if (!base) return [];
-
-  const patterns = [
-    `${base} tips`,
-    `${base} for beginners`,
-    `best ${base}`,
-    `how to ${base}`,
-    `${base} strategy`,
-    `${base} guide`,
-    `${base} examples`,
-    `${base} mistakes`,
-  ];
-
-  return [...new Set(patterns)];
-}
-
-function buildBrief(keyword, intent, channel) {
-  const cleanKeyword = keyword.trim();
+function generateBrief(keyword, intent, channel) {
+  const clean = keyword.trim();
   const title =
     intent === 'Commercial'
-      ? `Best ${cleanKeyword} options for growing your business`
+      ? `Best ${clean} options for growing your business`
       : intent === 'Informational'
-        ? `How to use ${cleanKeyword} the right way`
-        : intent === 'Transactional'
-          ? `${cleanKeyword}: the complete buying guide`
-          : `${cleanKeyword}: strategy guide`; 
-
-  const hooks = [
-    `Why ${cleanKeyword} matters for your audience`,
-    `The biggest mistakes people make with ${cleanKeyword}`,
-    `What to do first when targeting ${cleanKeyword}`,
-  ];
-
-  const contentOutline = [
-    'Start with the core problem the audience faces',
-    'Explain the practical solution in simple language',
-    'Offer a clear CTA or lead magnet',
-    'Link this topic to supporting pages or related content',
-  ];
-
-  const socialPost =
-    channel.includes('Instagram') || channel.includes('Short-form')
-      ? `Hook: ${cleanKeyword} is a high-intent topic your audience is already searching for. Share a quick framework and CTA.`
-      : `Write a concise post explaining why ${cleanKeyword} matters and link to a deeper article or page.`;
+        ? `How to use ${clean} the right way`
+        : `${clean}: complete strategy and buying guide`;
 
   return {
     title,
-    hooks,
-    contentOutline,
-    socialPost,
-    cta: 'Collect email signups or encourage product exploration',
+    hook: `Why ${clean} is driving high-intent demand in your market`,
+    outline: [
+      'Identify the main audience problem',
+      'Explain the core strategy in a simple framework',
+      'Share comparison points, examples, and CTA',
+      'Support with internal links and conversion-focused next steps',
+    ],
+    socialHook:
+      channel.includes('Instagram') || channel.includes('Short-form')
+        ? `Quick hook: ${clean} is one of the fastest ways to capture intent from your audience this week.`
+        : `Use ${clean} as the anchor idea for a high-value content series across blog, social, and landing pages.`,
+    cta: 'Capture leads with a comparison guide, newsletter signup, or demo CTA',
   };
 }
 
-function normalizeKeywordImport(value) {
-  return String(value || '')
-    .trim()
-    .replace(/\s+/g, ' ');
-}
-
 export default function App() {
-  const [projects, setProjects] = useState(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY}-projects`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (error) {
-        console.error('Could not parse project data', error);
-      }
-    }
-    return defaultProjects;
-  });
-
-  const [selectedProjectId, setSelectedProjectId] = useState(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY}-selected-project`);
-    return saved || DEFAULT_PROJECT_ID;
-  });
-
-  const [keywords, setKeywords] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (error) {
-        console.error('Could not parse keyword data', error);
-      }
-    }
-    return defaultKeywords;
-  });
-
+  const [projects, setProjects] = useState(defaultProjects);
+  const [selectedProjectId, setSelectedProjectId] = useState(defaultProjects[0].id);
+  const [keywords, setKeywords] = useState(defaultKeywords);
   const [projectName, setProjectName] = useState('');
   const [projectNiche, setProjectNiche] = useState('');
   const [projectGoal, setProjectGoal] = useState('');
-
+  const [query, setQuery] = useState('');
+  const [intentFilter, setIntentFilter] = useState('All');
+  const [channelFilter, setChannelFilter] = useState('All');
+  const [selectedKeywordId, setSelectedKeywordId] = useState(defaultKeywords[0].id);
   const [keywordInput, setKeywordInput] = useState('');
   const [intent, setIntent] = useState('Commercial');
   const [volume, setVolume] = useState(1200);
   const [difficulty, setDifficulty] = useState(42);
   const [relevance, setRelevance] = useState(85);
-  const [brandFit, setBrandFit] = useState(80);
+  const [brandFit, setBrandFit] = useState(82);
   const [channel, setChannel] = useState('SEO blog');
   const [contentType, setContentType] = useState('Blog article');
   const [status, setStatus] = useState('Ready');
   const [notes, setNotes] = useState('');
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [intentFilter, setIntentFilter] = useState('All');
-  const [channelFilter, setChannelFilter] = useState('All');
-  const [selectedKeywordId, setSelectedKeywordId] = useState(null);
-  const [importText, setImportText] = useState('');
+  const selectedProject = useMemo(
+    () => projects.find((project) => project.id === selectedProjectId) || projects[0],
+    [projects, selectedProjectId]
+  );
 
-  useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}-projects`, JSON.stringify(projects));
-    localStorage.setItem(`${STORAGE_KEY}-selected-project`, selectedProjectId);
-  }, [projects, selectedProjectId]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(keywords));
-  }, [keywords]);
-
-  const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
-
-  const currentProjectKeywords = useMemo(
-    () =>
-      keywords.filter((item) => item.projectId === selectedProjectId),
+  const projectKeywords = useMemo(
+    () => keywords.filter((item) => item.projectId === selectedProjectId),
     [keywords, selectedProjectId]
   );
 
   const enrichedKeywords = useMemo(
     () =>
-      currentProjectKeywords.map((item) => {
+      projectKeywords.map((item) => {
         const score = scoreKeyword(item);
-        return {
-          ...item,
-          opportunityScore: score,
-          priorityLabel: getPriorityLabel(score),
-        };
+        return { ...item, opportunityScore: score, priorityLabel: getPriorityLabel(score) };
       }),
-    [currentProjectKeywords]
+    [projectKeywords]
   );
 
   const filteredKeywords = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const lowered = query.trim().toLowerCase();
     return enrichedKeywords.filter((item) => {
-      const matchesQuery = !query || item.keyword.toLowerCase().includes(query);
+      const matchesText = !lowered || item.keyword.toLowerCase().includes(lowered);
       const matchesIntent = intentFilter === 'All' || item.intent === intentFilter;
       const matchesChannel = channelFilter === 'All' || item.channel === channelFilter;
-      return matchesQuery && matchesIntent && matchesChannel;
+      return matchesText && matchesIntent && matchesChannel;
     });
-  }, [enrichedKeywords, searchQuery, intentFilter, channelFilter]);
+  }, [enrichedKeywords, query, intentFilter, channelFilter]);
 
-  const selectedKeyword = filteredKeywords.find((item) => item.id === selectedKeywordId) || enrichedKeywords[0] || null;
+  const selectedKeyword =
+    filteredKeywords.find((item) => item.id === selectedKeywordId) || enrichedKeywords[0] || null;
 
   const stats = useMemo(() => {
     const total = enrichedKeywords.length;
-    const highPriority = enrichedKeywords.filter((item) => item.priorityLabel === 'High priority').length;
-    const avgOpportunity = total
+    const high = enrichedKeywords.filter((item) => item.priorityLabel === 'High').length;
+    const avg = total
       ? Math.round(enrichedKeywords.reduce((sum, item) => sum + item.opportunityScore, 0) / total)
       : 0;
-    const readyCount = enrichedKeywords.filter((item) => item.status.toLowerCase().includes('ready')).length;
-    return { total, highPriority, avgOpportunity, readyCount };
+    const ready = enrichedKeywords.filter((item) => item.status.toLowerCase().includes('ready')).length;
+    return { total, high, avg, ready };
   }, [enrichedKeywords]);
 
-  const channelBuckets = useMemo(() => {
-    const buckets = {};
-    channelOptions.forEach((option) => {
-      buckets[option] = enrichedKeywords.filter((item) => item.channel === option);
+  const topOpportunities = useMemo(
+    () => [...enrichedKeywords].sort((a, b) => b.opportunityScore - a.opportunityScore).slice(0, 4),
+    [enrichedKeywords]
+  );
+
+  const channelSummary = useMemo(() => {
+    const bucket = {};
+    ['SEO blog', 'Website landing page', 'Product page', 'Instagram carousel', 'Short-form video', 'LinkedIn post', 'Newsletter', 'YouTube topic'].forEach((channelName) => {
+      bucket[channelName] = enrichedKeywords.filter((item) => item.channel === channelName).length;
     });
-    return buckets;
+    return bucket;
   }, [enrichedKeywords]);
 
-  function addProject(event) {
+  function handleAddProject(event) {
     event.preventDefault();
-    const trimmedName = projectName.trim();
-    if (!trimmedName) return;
+    const safeName = projectName.trim();
+    if (!safeName) return;
 
     const newProject = {
-      id: `project-${Date.now()}`,
-      name: trimmedName,
-      niche: projectNiche.trim() || 'General growth marketing',
-      goal: projectGoal.trim() || 'Increase organic and social reach',
+      id: `proj-${Date.now()}`,
+      name: safeName,
+      niche: projectNiche.trim() || 'General growth strategy',
+      goal: projectGoal.trim() || 'Increase organic reach',
+      status: 'Planning',
     };
 
     setProjects((current) => [newProject, ...current]);
@@ -307,15 +249,15 @@ export default function App() {
     setProjectGoal('');
   }
 
-  function addKeyword(event) {
+  function handleAddKeyword(event) {
     event.preventDefault();
-    const trimmed = keywordInput.trim();
-    if (!trimmed) return;
+    const term = keywordInput.trim();
+    if (!term) return;
 
-    const candidate = {
+    const item = {
       id: `kw-${Date.now()}`,
       projectId: selectedProjectId,
-      keyword: trimmed,
+      keyword: term,
       intent,
       volume: Number(volume) || 0,
       difficulty: Number(difficulty) || 0,
@@ -325,399 +267,329 @@ export default function App() {
       contentType,
       status,
       notes: notes.trim(),
-      createdAt: new Date().toISOString(),
+      trend: 65,
     };
 
-    setKeywords((current) => [candidate, ...current]);
+    setKeywords((current) => [item, ...current]);
+    setSelectedKeywordId(item.id);
     setKeywordInput('');
     setNotes('');
     setStatus('Ready');
-    setSelectedKeywordId(candidate.id);
   }
 
-  function addSeedTopic() {
-    if (!keywordInput.trim()) return;
-    const related = generateRelatedKeywords(keywordInput);
-    const generated = related.map((term, index) => ({
-      id: `seed-${Date.now()}-${index}`,
-      projectId: selectedProjectId,
-      keyword: term,
-      intent: index % 2 === 0 ? 'Informational' : 'Commercial',
-      volume: 700 + index * 220,
-      difficulty: 25 + index * 9,
-      relevance: 78 + index * 5,
-      brandFit: 72 + index * 6,
-      contentType: index % 2 === 0 ? 'Blog article' : 'Social content',
-      channel: index % 2 === 0 ? 'SEO blog' : 'Instagram carousel',
-      status: 'New idea',
-      notes: 'Generated from topic cluster',
-      createdAt: new Date().toISOString(),
-    }));
-
-    setKeywords((current) => [...generated, ...current]);
-    setKeywordInput('');
-  }
-
-  function removeKeyword(id) {
+  function handleDeleteKeyword(id) {
     setKeywords((current) => current.filter((item) => item.id !== id));
-    setSelectedKeywordId((current) => (current === id ? null : current));
+    if (selectedKeywordId === id) {
+      setSelectedKeywordId('');
+    }
   }
 
-  function resetDemo() {
-    setProjects(defaultProjects);
-    setSelectedProjectId(DEFAULT_PROJECT_ID);
-    setKeywords(defaultKeywords);
-  }
-
-  function handleImport(event) {
-    const text = importText.trim();
-    if (!text) return;
-
-    const rows = text
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    const imported = rows
-      .map((line) => normalizeKeywordImport(line))
-      .filter(Boolean)
-      .map((term, index) => ({
-        id: `import-${Date.now()}-${index}`,
-        projectId: selectedProjectId,
-        keyword: term,
-        intent: index % 2 === 0 ? 'Informational' : 'Commercial',
-        volume: 600 + index * 180,
-        difficulty: 20 + index * 7,
-        relevance: 70 + index * 6,
-        brandFit: 70 + index * 5,
-        channel: channelOptions[index % channelOptions.length],
-        contentType: 'Imported topic',
-        status: 'Imported',
-        notes: 'Imported from CSV or pasted list',
-        createdAt: new Date().toISOString(),
-      }));
-
-    setKeywords((current) => [...imported, ...current]);
-    setImportText('');
-  }
-
-  function exportCsv() {
-    const rows = [
-      ['Project', 'Keyword', 'Intent', 'Volume', 'Difficulty', 'Relevance', 'Brand Fit', 'Channel', 'Content Type', 'Status', 'Opportunity'],
-      ...enrichedKeywords.map((item) => [
-        selectedProject?.name || 'Project',
-        item.keyword,
-        item.intent,
-        item.volume,
-        item.difficulty,
-        item.relevance,
-        item.brandFit,
-        item.channel,
-        item.contentType,
-        item.status,
-        item.opportunityScore,
-      ]),
-    ];
-
-    const csv = rows
-      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${(selectedProject?.name || 'keyword-project').replace(/\s+/g, '-').toLowerCase()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  const brief = selectedKeyword ? buildBrief(selectedKeyword.keyword, selectedKeyword.intent, selectedKeyword.channel) : null;
+  const brief = selectedKeyword ? generateBrief(selectedKeyword.keyword, selectedKeyword.intent, selectedKeyword.channel) : null;
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Organic growth system</p>
-          <h1>Keyword Planner</h1>
-        </div>
-        <div className="actions">
-          <button className="secondary" onClick={resetDemo}>Reset demo</button>
-          <button onClick={exportCsv}>Export CSV</button>
-        </div>
-      </header>
-
-      <section className="project-strip panel">
-        <div className="project-header">
+    <div className="saas-shell">
+      <aside className="sidebar">
+        <div className="brand-block">
+          <div className="brand-mark">S</div>
           <div>
-            <h2>Projects</h2>
-            <p>{selectedProject?.niche || 'Niche not set'}</p>
+            <p className="label">SEO suite</p>
+            <h2>Semrush-style</h2>
           </div>
-          <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>{project.name}</option>
-            ))}
-          </select>
         </div>
 
-        <form onSubmit={addProject} className="project-form">
-          <input value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Project name" />
-          <input value={projectNiche} onChange={(event) => setProjectNiche(event.target.value)} placeholder="Niche or business sector" />
-          <input value={projectGoal} onChange={(event) => setProjectGoal(event.target.value)} placeholder="Primary goal" />
-          <button type="submit">Add project</button>
-        </form>
-      </section>
+        <nav className="nav-menu">
+          {navItems.map((item, index) => (
+            <button key={item} className={index === 1 ? 'nav-item active' : 'nav-item'} type="button">
+              {item}
+            </button>
+          ))}
+        </nav>
 
-      <section className="stats-grid">
-        <div className="stat-card">
-          <span>Total keywords</span>
-          <strong>{stats.total}</strong>
+        <div className="sidebar-card">
+          <p className="label">Current project</p>
+          <h3>{selectedProject.name}</h3>
+          <p>{selectedProject.niche}</p>
+          <span className="status-badge">{selectedProject.status}</span>
         </div>
-        <div className="stat-card">
-          <span>High priority</span>
-          <strong>{stats.highPriority}</strong>
-        </div>
-        <div className="stat-card">
-          <span>Average opportunity</span>
-          <strong>{stats.avgOpportunity}/100</strong>
-        </div>
-        <div className="stat-card">
-          <span>Ready to publish</span>
-          <strong>{stats.readyCount}</strong>
-        </div>
-      </section>
+      </aside>
 
-      <section className="panel-grid">
-        <div className="panel">
-          <h2>Add keyword</h2>
-          <form onSubmit={addKeyword} className="keyword-form">
-            <label>
-              Keyword or topic
-              <input
-                value={keywordInput}
-                onChange={(event) => setKeywordInput(event.target.value)}
-                placeholder="e.g. ecommerce email automation"
-              />
-            </label>
+      <main className="main-panel">
+        <header className="topbar">
+          <div>
+            <p className="label">Keyword research overview</p>
+            <h1>Growth dashboard</h1>
+          </div>
 
-            <div className="field-row">
-              <label>
-                Intent
-                <select value={intent} onChange={(event) => setIntent(event.target.value)}>
+          <div className="topbar-actions">
+            <div className="search-box">
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search keywords" />
+            </div>
+            <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
+            <button type="button">Export</button>
+          </div>
+        </header>
+
+        <section className="stats-grid">
+          <div className="stat-card accent">
+            <span>Total keywords</span>
+            <strong>{stats.total}</strong>
+            <small>Across active projects</small>
+          </div>
+          <div className="stat-card">
+            <span>High priority</span>
+            <strong>{stats.high}</strong>
+            <small>Ready for content</small>
+          </div>
+          <div className="stat-card">
+            <span>Avg opportunity</span>
+            <strong>{stats.avg}/100</strong>
+            <small>Opportunity score</small>
+          </div>
+          <div className="stat-card">
+            <span>Ready to publish</span>
+            <strong>{stats.ready}</strong>
+            <small>Actionable content</small>
+          </div>
+        </section>
+
+        <section className="insight-grid">
+          <div className="panel chart-panel">
+            <div className="panel-header">
+              <div>
+                <p className="label">Performance</p>
+                <h3>Keyword opportunity</h3>
+              </div>
+            </div>
+
+            <div className="bar-list">
+              {topOpportunities.map((item) => (
+                <div key={item.id} className="bar-row">
+                  <div className="bar-meta">
+                    <span>{item.keyword}</span>
+                    <strong>{item.opportunityScore}/100</strong>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${item.opportunityScore}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <p className="label">Top opportunities</p>
+                <h3>Priority focus</h3>
+              </div>
+            </div>
+
+            <div className="opportunity-list">
+              {topOpportunities.map((item) => (
+                <div key={item.id} className="opportunity-row">
+                  <div>
+                    <strong>{item.keyword}</strong>
+                    <small>{item.intent}</small>
+                  </div>
+                  <span className={`pill ${item.priorityLabel.toLowerCase()}`}>{item.priorityLabel}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="workspace-grid">
+          <div className="panel large-panel">
+            <div className="panel-header split-header">
+              <div>
+                <p className="label">Keyword planner</p>
+                <h3>SEO + content roadmap</h3>
+              </div>
+              <button type="button" className="secondary-button">Add project</button>
+            </div>
+
+            <form className="project-form" onSubmit={handleAddProject}>
+              <input value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Project name" />
+              <input value={projectNiche} onChange={(event) => setProjectNiche(event.target.value)} placeholder="Niche" />
+              <input value={projectGoal} onChange={(event) => setProjectGoal(event.target.value)} placeholder="Primary goal" />
+              <button type="submit">Create</button>
+            </form>
+
+            <div className="table-header-row">
+              <div className="table-controls">
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter by keyword" />
+                <select value={intentFilter} onChange={(event) => setIntentFilter(event.target.value)}>
                   {intentOptions.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
-              </label>
-
-              <label>
-                Channel
-                <select value={channel} onChange={(event) => setChannel(event.target.value)}>
+                <select value={channelFilter} onChange={(event) => setChannelFilter(event.target.value)}>
                   {channelOptions.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
-              </label>
-            </div>
-
-            <div className="field-row">
-              <label>
-                Volume
-                <input type="number" value={volume} onChange={(event) => setVolume(event.target.value)} />
-              </label>
-
-              <label>
-                Difficulty
-                <input type="number" value={difficulty} onChange={(event) => setDifficulty(event.target.value)} />
-              </label>
-            </div>
-
-            <div className="field-row">
-              <label>
-                Relevance
-                <input type="number" min="0" max="100" value={relevance} onChange={(event) => setRelevance(event.target.value)} />
-              </label>
-
-              <label>
-                Brand fit
-                <input type="number" min="0" max="100" value={brandFit} onChange={(event) => setBrandFit(event.target.value)} />
-              </label>
-            </div>
-
-            <div className="field-row">
-              <label>
-                Content type
-                <input value={contentType} onChange={(event) => setContentType(event.target.value)} />
-              </label>
-
-              <label>
-                Status
-                <input value={status} onChange={(event) => setStatus(event.target.value)} />
-              </label>
-            </div>
-
-            <label>
-              Notes
-              <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows="3" />
-            </label>
-
-            <div className="button-row">
-              <button type="submit">Add keyword</button>
-              <button type="button" className="secondary" onClick={addSeedTopic}>Generate related</button>
-            </div>
-          </form>
-        </div>
-
-        <div className="panel">
-          <h2>Filters & import</h2>
-          <div className="filters">
-            <label>
-              Search
-              <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Find keyword" />
-            </label>
-
-            <label>
-              Intent
-              <select value={intentFilter} onChange={(event) => setIntentFilter(event.target.value)}>
-                <option value="All">All</option>
-                {intentOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Channel
-              <select value={channelFilter} onChange={(event) => setChannelFilter(event.target.value)}>
-                <option value="All">All</option>
-                {channelOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="mini-summary">
-            <h3>Channel planning</h3>
-            {channelOptions.map((option) => (
-              <div key={option} className="channel-row">
-                <span>{option}</span>
-                <strong>{channelBuckets[option].length}</strong>
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className="import-box">
-            <h3>Import from CSV / pasted list</h3>
-            <textarea
-              value={importText}
-              onChange={(event) => setImportText(event.target.value)}
-              rows="5"
-              placeholder="Paste one keyword per line"
-            />
-            <button className="secondary" type="button" onClick={handleImport}>Import keywords</button>
-          </div>
-        </div>
-      </section>
-
-      <section className="panel detail-grid">
-        <div className="detail-panel">
-          <h2>Keyword roadmap</h2>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Keyword</th>
-                  <th>Intent</th>
-                  <th>Volume</th>
-                  <th>Difficulty</th>
-                  <th>Opportunity</th>
-                  <th>Channel</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredKeywords.map((item) => (
-                  <tr
-                    key={item.id}
-                    className={selectedKeyword?.id === item.id ? 'selected-row' : ''}
-                    onClick={() => setSelectedKeywordId(item.id)}
-                  >
-                    <td>
-                      <div className="keyword-cell">
-                        <strong>{item.keyword}</strong>
-                        {item.notes && <small>{item.notes}</small>}
-                      </div>
-                    </td>
-                    <td>{item.intent}</td>
-                    <td>{item.volume}</td>
-                    <td>{item.difficulty}</td>
-                    <td>
-                      <span className={`pill ${item.priorityLabel.toLowerCase().replace(/\s+/g, '-')}`}>
-                        {item.opportunityScore}/100
-                      </span>
-                      <small>{item.priorityLabel}</small>
-                    </td>
-                    <td>{item.channel}</td>
-                    <td>{item.status}</td>
-                    <td>
-                      <button className="danger" type="button" onClick={(event) => {
-                        event.stopPropagation();
-                        removeKeyword(item.id);
-                      }}>
-                        Delete
-                      </button>
-                    </td>
+            <div className="keyword-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Keyword</th>
+                    <th>Intent</th>
+                    <th>Volume</th>
+                    <th>Difficulty</th>
+                    <th>Channel</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredKeywords.map((item) => (
+                    <tr key={item.id} className={selectedKeyword?.id === item.id ? 'selected-row' : ''} onClick={() => setSelectedKeywordId(item.id)}>
+                      <td>
+                        <div className="keyword-cell">
+                          <strong>{item.keyword}</strong>
+                          <small>{item.notes}</small>
+                        </div>
+                      </td>
+                      <td>{item.intent}</td>
+                      <td>{item.volume}</td>
+                      <td>{item.difficulty}</td>
+                      <td>{item.channel}</td>
+                      <td>{item.status}</td>
+                      <td>
+                        <span className={`pill ${item.priorityLabel.toLowerCase()}`}>{item.opportunityScore}/100</span>
+                      </td>
+                      <td>
+                        <button type="button" className="danger-button" onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteKeyword(item.id);
+                        }}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <aside className="brief-panel">
-          <h2>Content brief</h2>
-          {brief ? (
-            <>
-              <div className="brief-block">
-                <span className="label">Primary idea</span>
-                <h3>{brief.title}</h3>
+          <aside className="panel side-panel">
+            <div className="panel-header">
+              <div>
+                <p className="label">Content brief</p>
+                <h3>Selected keyword</h3>
               </div>
+            </div>
 
-              <div className="brief-block">
-                <span className="label">Content hooks</span>
-                <ul>
-                  {brief.hooks.map((hook) => (
-                    <li key={hook}>{hook}</li>
+            {brief ? (
+              <div className="brief-wrap">
+                <div className="brief-card">
+                  <span className="label">Focus topic</span>
+                  <h4>{brief.title}</h4>
+                </div>
+
+                <div className="brief-card">
+                  <span className="label">Hook</span>
+                  <p>{brief.hook}</p>
+                </div>
+
+                <div className="brief-card">
+                  <span className="label">Outline</span>
+                  <ol>
+                    {brief.outline.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="brief-card">
+                  <span className="label">Social angle</span>
+                  <p>{brief.socialHook}</p>
+                </div>
+
+                <div className="brief-card">
+                  <span className="label">CTA</span>
+                  <p>{brief.cta}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="muted-text">Choose a keyword to generate a content brief.</p>
+            )}
+          </aside>
+        </section>
+
+        <section className="bottom-grid">
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <p className="label">Planner</p>
+                <h3>Add keyword</h3>
+              </div>
+            </div>
+
+            <form className="entry-form" onSubmit={handleAddKeyword}>
+              <div className="field-row">
+                <input value={keywordInput} onChange={(event) => setKeywordInput(event.target.value)} placeholder="Add keyword or topic" />
+                <select value={intent} onChange={(event) => setIntent(event.target.value)}>
+                  {['Informational', 'Commercial', 'Transactional', 'Navigational', 'Brand'].map((option) => (
+                    <option key={option} value={option}>{option}</option>
                   ))}
-                </ul>
+                </select>
               </div>
 
-              <div className="brief-block">
-                <span className="label">Outline</span>
-                <ol>
-                  {brief.contentOutline.map((step) => (
-                    <li key={step}>{step}</li>
+              <div className="field-row">
+                <input type="number" value={volume} onChange={(event) => setVolume(event.target.value)} placeholder="Volume" />
+                <input type="number" value={difficulty} onChange={(event) => setDifficulty(event.target.value)} placeholder="Difficulty" />
+              </div>
+
+              <div className="field-row">
+                <input type="number" value={relevance} onChange={(event) => setRelevance(event.target.value)} placeholder="Relevance" />
+                <input type="number" value={brandFit} onChange={(event) => setBrandFit(event.target.value)} placeholder="Brand fit" />
+              </div>
+
+              <div className="field-row">
+                <select value={channel} onChange={(event) => setChannel(event.target.value)}>
+                  {['SEO blog', 'Website landing page', 'Product page', 'Instagram carousel', 'Short-form video', 'LinkedIn post', 'Newsletter', 'YouTube topic'].map((option) => (
+                    <option key={option} value={option}>{option}</option>
                   ))}
-                </ol>
+                </select>
+                <input value={contentType} onChange={(event) => setContentType(event.target.value)} placeholder="Content type" />
               </div>
 
-              <div className="brief-block">
-                <span className="label">Social angle</span>
-                <p>{brief.socialPost}</p>
+              <div className="field-row">
+                <input value={status} onChange={(event) => setStatus(event.target.value)} placeholder="Status" />
+                <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Notes" />
               </div>
 
-              <div className="brief-block">
-                <span className="label">CTA</span>
-                <p>{brief.cta}</p>
+              <button type="submit">Save keyword</button>
+            </form>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <p className="label">Distribution</p>
+                <h3>Channel mix</h3>
               </div>
-            </>
-          ) : (
-            <p>Select a keyword to generate a content brief.</p>
-          )}
-        </aside>
-      </section>
+            </div>
+
+            <div className="channel-grid">
+              {Object.entries(channelSummary).map(([name, count]) => (
+                <div key={name} className="channel-pill">
+                  <span>{name}</span>
+                  <strong>{count}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

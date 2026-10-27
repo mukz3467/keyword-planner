@@ -1,2 +1,14 @@
-# keyword-planner
-Free SEO + website + social keyword planner for organic content strategy
+# Dependencies
+node_modules/
+
+# Production build
+/dist/
+
+# Local environment
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+
+dist/

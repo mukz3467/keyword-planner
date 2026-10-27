@@ -1,16 +1,23 @@
 # Keyword Planner
 
-A free, practical keyword planner for organic SEO, website content, and social media planning.
+A free, real-use keyword planner built for SEO, website content, and social media strategy.
 
-## Features
+## What it includes
 - Project-based keyword planning
-- SEO, website, and social channel mapping
-- Search + filter by intent and channel
-- Keyword opportunity scoring
+- Keyword creation, filtering, and deletion
+- SEO + social + website channel mapping
+- Opportunity scoring and keyword prioritization
+- Imported keyword lists from pasted text
 - Content brief generation for selected keywords
-- CSV export
-- CSV or pasted list import
-- Local browser storage for quick use without paid services
+- CSV export for planning and reporting
+- Persistent SQLite database for real project storage
+- Production-style app structure using React + Express + SQLite
+
+## Stack
+- Frontend: React + Vite
+- Backend: Express.js
+- Database: SQLite
+- Local development: Vite proxy to Express API
 
 ## Quick start
 
@@ -19,20 +26,33 @@ A free, practical keyword planner for organic SEO, website content, and social m
    npm install
    ```
 
-2. Start the app
+2. Start the app in development mode
    ```bash
    npm run dev
    ```
 
-3. Open the local Vite URL in your browser.
+3. Open the app in the browser at the Vite URL shown in the terminal.
+
+## Production-style run
+
+Build the frontend:
+```bash
+npm run build
+```
+
+Serve the built app with the backend:
+```bash
+npm run start
+```
+
+The app will run from the Express backend on port 3001 and serve the built UI.
 
 ## Notes
-This is a real-use starter app for planning organic content strategy. It is intentionally free, lightweight, and local-first so you can use it immediately without paid SaaS tools.
+This is a free, local-first production-style version for running on your own machine or a private server. It is designed to be practical and usable without paid SaaS services.
 
-## Recommended next upgrades
-- Save data to a backend database
-- Add user accounts
-- Add trend and keyword volume APIs
-- Add campaign tracking and reporting
-- Add content calendar view
-- Export briefs to markdown or Notion-style documents
+## Recommended future upgrades
+- Authentication and user accounts
+- Keyword trend and volume integrations
+- Search console / GA4 reporting
+- Content calendar workflow
+- Team collaboration and roles

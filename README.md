@@ -1,51 +1,64 @@
-# Keyword Planner
+# Keywords Planner
 
-A polished productivity-focused keyword strategy dashboard designed to feel like a professional SEO SaaS product.
+A private SEO intelligence platform built for keyword research, content strategy, search intent, competitors, and opportunity discovery.
 
-## What it includes
-- Project-based keyword planning
-- Search and filter by intent and channel
-- Keyword opportunity scoring
-- Quick keyword creation and deletion
-- Content brief generation for selected keywords
-- Channel mix overview
-- CSV export support
-- Backend API with SQLite persistence
-- Professional dashboard layout inspired by enterprise SEO tools
+## Features
 
-## Stack
-- Frontend: React + Vite
-- Backend: Express.js
-- Database: SQLite
-- Local development: Vite proxy to API
+- Keyword discovery and opportunity tracking
+- Search intent and trend tagging
+- Competitor comparison and keyword gap review
+- SERP and trend modules inspired by SEO tooling workflows
+- Content planning and social media content ideas
+- Demo-mode data with clear labels for estimated metrics
+- Ready for future provider integrations via modular API architecture
 
-## Run locally
+## Tech stack
 
-1. Install dependencies
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Server-side API routes
+- Vercel-ready structure
+
+## Local development
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the development app
+2. Create your environment file:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. Start the app:
    ```bash
    npm run dev
    ```
 
-3. Open the local Vite URL shown in the terminal.
+4. Open: http://localhost:3000
 
-## Production-style serve
+## Production deployment
 
-```bash
-npm run build
-npm run start
-```
+1. Set your environment variables in Vercel.
+2. Deploy the project repository to Vercel.
+3. Confirm the app builds successfully with:
+   ```bash
+   npm run build
+   ```
 
-## Notes
-This version is built as a strong SaaS-style planning dashboard and is suitable for private use, internal strategy work, and product demonstrations.
+## Important notes
 
-## Recommended future upgrades
-- Authentication and user workspaces
-- Real keyword data APIs
-- Rank tracking and competitor analysis
-- Billing and subscription management
-- Team collaboration and reporting
+- This starter version runs in demo mode when provider credentials are missing.
+- All metrics shown are estimates and should be treated as research indicators rather than exact Google data.
+- Real provider integrations require API approvals, billing, and credential setup.
+
+## Future integrations
+
+The app is structured so you can plug in real providers later for:
+- Google Trends
+- Google Ads keyword data
+- SERP API
+- PageSpeed Insights
+- Backlink or keyword intelligence providers

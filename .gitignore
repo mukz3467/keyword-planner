@@ -1,15 +1,16 @@
-# Dependencies
-node_modules/
+# dependencies
+/node_modules
 
-# Build output
-dist/
+# next.js
+/.next/
+/out/
 
-# Environment variables
-.env
-.env.*
+# production
+/build
 
-# Logs
-npm-debug.log*
-
-# OS metadata
+# misc
 .DS_Store
+*.pem
+
+# debug
+npm-debug.log*
